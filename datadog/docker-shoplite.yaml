@@ -1,0 +1,14 @@
+# Same log collection for docker-compose.yml: the Agent container reads the shared log volume.
+logs:
+  - type: file
+    path: /var/log/shoplite/gateway.json
+    service: gateway
+    source: nodejs
+  - type: file
+    path: /var/log/shoplite/catalog.json
+    service: catalog
+    source: python
+  - type: file
+    path: /var/log/shoplite/orders.json
+    service: orders
+    source: java

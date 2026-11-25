@@ -1,0 +1,57 @@
+# ShopLite in containers with a Datadog Agent. Needs DD_API_KEY (and optionally DD_RUM_*) in .env.
+#   docker compose up --build
+x-dd: &dd
+  DD_AGENT_HOST: datadog-agent
+  DD_ENV: ${DD_ENV:-lab}
+  DD_VERSION: "1.0.0"
+
+services:
+  datadog-agent:
+    image: gcr.io/datadoghq/agent:7
+    environment:
+      DD_API_KEY: ${DD_API_KEY}
+      DD_SITE: ${DD_SITE:-datadoghq.com}
+      DD_ENV: ${DD_ENV:-lab}
+      DD_APM_ENABLED: "true"
+      DD_APM_NON_LOCAL_TRAFFIC: "true"
+      DD_DOGSTATSD_NON_LOCAL_TRAFFIC: "true"
+      DD_LOGS_ENABLED: "true"
+      DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT: 0.0.0.0:4318
+    volumes:
+      - shoplite-logs:/var/log/shoplite:ro
+      - ./datadog/docker-shoplite.yaml:/etc/datadog-agent/conf.d/shoplite.d/conf.yaml:ro
+
+  gateway:
+    build: { context: services/gateway-node, additional_contexts: { frontend: frontend } }
+    environment:
+      <<: *dd
+      CATALOG_URL: http://catalog:8001
+      ORDERS_URL: http://orders:8002
+      DD_SITE: ${DD_SITE:-datadoghq.com}
+      DD_RUM_APP_ID: ${DD_RUM_APP_ID:-}
+      DD_RUM_CLIENT_TOKEN: ${DD_RUM_CLIENT_TOKEN:-}
+    ports: ["3000:3000"]
+    volumes: [shoplite-logs:/var/log/shoplite]
+    depends_on: [catalog, orders, datadog-agent]
+  catalog:
+    build: services/catalog-python
+    environment: *dd
+    volumes: [shoplite-logs:/var/log/shoplite]
+  orders:
+    build: services/orders-java
+    environment:
+      <<: *dd
+      PAYMENTS_URL: http://payments:8003
+      NOTIFICATIONS_URL: http://notifications:8004
+    volumes: [shoplite-logs:/var/log/shoplite]
+    depends_on: [payments, notifications]
+  payments:
+    build: services/payments-go
+    environment:
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=${DD_ENV:-lab},service.version=1.0.0
+  notifications:
+    build: services/notifications-dotnet
+    environment: *dd
+
+volumes:
+  shoplite-logs:

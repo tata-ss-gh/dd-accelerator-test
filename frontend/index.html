@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShopLite</title>
+<!--
+  Real User Monitoring: the Datadog Browser RUM SDK records page views, clicks (actions),
+  resources, long tasks and errors, and adds trace headers to calls to our own API, so the
+  browser becomes the first hop of the distributed trace.
+  The application id and client token come from the gateway (/rum-config.js, from DD_RUM_* env vars).
+-->
+<script src="/rum-config.js"></script>
+<script src="https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum.js"></script>
+<script>
+  window.SHOPLITE_RUM = window.SHOPLITE_RUM || {};
+  if (window.DD_RUM && SHOPLITE_RUM.applicationId && SHOPLITE_RUM.clientToken) {
+    DD_RUM.init({
+      applicationId: SHOPLITE_RUM.applicationId,
+      clientToken: SHOPLITE_RUM.clientToken,    // public, browser-only key: it can only SEND RUM data
+      site: SHOPLITE_RUM.site,
+      service: 'shop-frontend',
+      env: SHOPLITE_RUM.env,
+      version: '1.0.0',
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: 0,
+      trackUserInteractions: true,
+      trackResources: true,
+      trackLongTasks: true,
+      defaultPrivacyLevel: 'mask-user-input',
+      allowedTracingUrls: [location.origin],    // trace headers on our own API calls
+      traceSampleRate: 100,
+    });
+  } else {
+    console.warn('[rum] Datadog RUM not configured: set DD_RUM_APP_ID and DD_RUM_CLIENT_TOKEN');
+  }
+</script>
+<style>
+  :root { --ink:#18202e; --muted:#5b6678; --line:#d5dbe5; --accent:#0b6e8a; --bg:#f3f5f8; --ok:#1f8a4c; --err:#c0392b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 "Segoe UI", system-ui, sans-serif; color: var(--ink); background: var(--bg); }
+  header { background: var(--ink); color: #fff; padding: 14px max(16px, 4vw); display: flex; justify-content: space-between; align-items: center; }
+  header b { font-size: 1.2rem; }
+  main { padding: 20px max(16px, 4vw); display: grid; gap: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 6px; }
+  .price { font-weight: 600; }
+  .cat { color: var(--muted); font-size: .85rem; }
+  button { font: inherit; border: 0; border-radius: 7px; padding: 8px 12px; background: var(--accent); color: #fff; cursor: pointer; }
+  #status { min-height: 1.5em; font-weight: 600; }
+  .ok { color: var(--ok); } .err { color: var(--err); }
+  .tools { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tools button { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<header><b>ShopLite</b><span id="user"></span></header>
+<main>
+  <div class="tools">
+    <button id="slow">Try a slow page action</button>
+    <button id="broken">Trigger a browser error</button>
+  </div>
+  <div id="status" aria-live="polite"></div>
+  <div class="grid" id="products">Loading products…</div>
+</main>
+<script>
+  const userId = 'user-' + (1 + Math.floor(Math.random() * 50));
+  document.getElementById('user').textContent = userId;
+  window.DD_RUM?.setUser({ id: userId });       // usr.id on every RUM event
+
+  const status = (text, cls) => { const s = document.getElementById('status'); s.textContent = text; s.className = cls || ''; };
+
+  async function loadProducts() {
+    const res = await fetch('/api/products');   // traced, and carries trace headers to the gateway
+    const products = await res.json();
+    const grid = document.getElementById('products');
+    grid.innerHTML = '';
+    for (const p of products.slice(0, 12)) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const name = document.createElement('b'); name.textContent = p.name;
+      const cat = document.createElement('span'); cat.className = 'cat'; cat.textContent = p.category;
+      const price = document.createElement('span'); price.className = 'price'; price.textContent = `$${p.price.toFixed(2)}`;
+      const buy = document.createElement('button');
+      buy.textContent = 'Buy';
+      buy.name = 'buy-' + p.id;
+      buy.addEventListener('click', () => checkout(p.id));
+      card.append(name, cat, price, buy);
+      grid.append(card);
+    }
+  }
+
+  async function checkout(productId) {
+    status('Placing order…');
+    const res = await fetch('/api/checkout', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ productId, quantity: 1, userId }),
+    });
+    const body = await res.json();
+    res.ok ? status(`Order #${body.orderId} paid`, 'ok') : status(`Order failed: ${body.error}`, 'err');
+  }
+
+  document.getElementById('slow').addEventListener('click', () => fetch('/api/slow?ms=1800').then(() => status('Slow action finished')));
+  document.getElementById('broken').addEventListener('click', () => { throw new Error('Deliberate browser error (RUM demo)'); });
+
+  loadProducts();
+</script>
+</body>
+</html>

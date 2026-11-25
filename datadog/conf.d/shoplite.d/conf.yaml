@@ -1,0 +1,16 @@
+# Datadog Agent log collection for ShopLite (needs logs_enabled: true in datadog.yaml).
+# Windows: copy this folder to C:\ProgramData\Datadog\conf.d\ (admin) and restart the Agent.
+# The paths match LOG_DIR in scripts/start-services.ps1.
+logs:
+  - type: file
+    path: C:\DatadogLab\logs\shoplite\gateway.json
+    service: gateway
+    source: nodejs
+  - type: file
+    path: C:\DatadogLab\logs\shoplite\catalog.json
+    service: catalog
+    source: python
+  - type: file
+    path: C:\DatadogLab\logs\shoplite\orders.json
+    service: orders
+    source: java

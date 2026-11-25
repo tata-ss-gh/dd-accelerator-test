@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Datadog .NET tracer: the CLR profiler (in bin/.../datadog) plus the Datadog.Trace API -->
+    <PackageReference Include="Datadog.Trace.Bundle" Version="3.59.0" />
+  </ItemGroup>
+
+</Project>

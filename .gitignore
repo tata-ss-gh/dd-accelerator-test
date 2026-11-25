@@ -1,0 +1,15 @@
+.env
+logs/
+*.log
+node_modules/
+.venv/
+__pycache__/
+*.db
+target/
+agents/
+bin/
+obj/
+*.exe
+*.exe~
+.idea/
+.vscode/

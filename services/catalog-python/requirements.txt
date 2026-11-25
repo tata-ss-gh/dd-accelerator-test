@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+# Datadog tracer (run the app under ddtrace-run) and DogStatsD client
+ddtrace
+datadog
+# JSON log lines for the Datadog Agent to tail
+python-json-logger>=3.1
