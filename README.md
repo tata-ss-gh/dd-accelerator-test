@@ -53,7 +53,7 @@ copy .env.example .env        # optional: fill in DD_RUM_APP_ID / DD_RUM_CLIENT_
 powershell -ExecutionPolicy Bypass -File scripts\setup.ps1            # install + build everything
 # once, as Administrator: log collection for the three JSON log files
 Copy-Item -Recurse -Force datadog\conf.d\shoplite.d C:\ProgramData\Datadog\conf.d\
-Restart-Service datadogagent
+Restart-Service datadogagent -Force   # -Force: the trace/process/OTel agents depend on it
 powershell -ExecutionPolicy Bypass -File scripts\start-services.ps1   # start (-Stop to stop)
 node tools\load.js 60 4                                               # traffic: 60 s at 4 req/s
 ```
