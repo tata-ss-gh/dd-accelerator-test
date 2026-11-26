@@ -99,4 +99,13 @@ foreach ($name in $ports.Keys) {
     } until ($ok -or (Get-Date) -gt $deadline)
     Write-Host ("  {0,-14} {1}" -f $name, $(if ($ok) { 'up' } else { "NOT UP. See logs\$name.log" }))
 }
+
+# PID files for the Datadog process check. The Agent runs as ddagentuser, which cannot read the
+# command lines of our processes, so it finds each service by the PID of the process on its port.
+$pidDir = Join-Path (Split-Path $env:LOG_DIR -Parent) 'pids'
+New-Item -ItemType Directory -Force $pidDir | Out-Null
+foreach ($name in $ports.Keys) {
+    $c = Get-NetTCPConnection -LocalPort $ports[$name] -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($c) { Set-Content -Path (Join-Path $pidDir "$name.pid") -Value $c.OwningProcess -Encoding ascii -NoNewline }
+}
 Write-Host "`nOpen http://localhost:3000 for the shop, or run: node tools/load.js 60 4"

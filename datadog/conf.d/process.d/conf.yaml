@@ -1,11 +1,15 @@
 # Datadog process integration: is each ShopLite process running, and how much CPU/memory does it use?
 # Produces system.processes.* metrics and service check process.up (tag process:<name>).
-# exact_match: false matches the command line, so the five services are told apart from other node/java/python processes.
+#
+# On Windows the Agent runs as ddagentuser and cannot read other users' command lines, so matching
+# on the command line (exact_match: false) finds nothing. scripts/start-services.ps1 writes one PID
+# file per service instead (the process listening on the service port). payments has a unique
+# executable name, so it is matched by name to show the other style.
 init_config:
 
 instances:
-  - { name: gateway,       search_string: ['dd-trace/init server.js'],           exact_match: false, thresholds: { critical: [1, 1] }, tags: [env:lab, team:shoplite, service:gateway] }
-  - { name: catalog,       search_string: ['uvicorn app:app'],                   exact_match: false, thresholds: { critical: [1, 2] }, tags: [env:lab, team:shoplite, service:catalog] }
-  - { name: orders,        search_string: ['orders-0.0.1-SNAPSHOT.jar'],         exact_match: false, thresholds: { critical: [1, 1] }, tags: [env:lab, team:shoplite, service:orders] }
-  - { name: payments,      search_string: ['payments.exe'],                      exact_match: true,  thresholds: { critical: [1, 1] }, tags: [env:lab, team:shoplite, service:payments] }
-  - { name: notifications, search_string: ['Notifications.dll'],                 exact_match: false, thresholds: { critical: [1, 1] }, tags: [env:lab, team:shoplite, service:notifications] }
+  - { name: gateway,       pid_file: 'C:\DatadogLab\logs\pids\gateway.pid',       tags: [env:lab, team:shoplite, service:gateway] }
+  - { name: catalog,       pid_file: 'C:\DatadogLab\logs\pids\catalog.pid',       tags: [env:lab, team:shoplite, service:catalog] }
+  - { name: orders,        pid_file: 'C:\DatadogLab\logs\pids\orders.pid',        tags: [env:lab, team:shoplite, service:orders] }
+  - { name: notifications, pid_file: 'C:\DatadogLab\logs\pids\notifications.pid', tags: [env:lab, team:shoplite, service:notifications] }
+  - { name: payments,      search_string: ['payments.exe'], exact_match: true, thresholds: { critical: [1, 1] }, tags: [env:lab, team:shoplite, service:payments] }
