@@ -78,7 +78,10 @@ Start-Svc 'notifications' 'services\notifications-dotnet' 'dotnet bin\Release\ne
 }
 
 # --- Java orders: dd-java-agent on the command line; JSON log file for the Agent to tail.
-Start-Svc 'orders' 'services\orders-java' "`"$java`" -Xmx256m -javaagent:agents\dd-java-agent.jar -Dlogging.file.name=$env:LOG_DIR\orders.json -jar target\orders-0.0.1-SNAPSHOT.jar"
+# DD_JMXFETCH_TOMCAT_ENABLED turns on the Datadog Tomcat integration inside the tracer (tomcat.* metrics).
+Start-Svc 'orders' 'services\orders-java' "`"$java`" -Xmx256m -javaagent:agents\dd-java-agent.jar -Dlogging.file.name=$env:LOG_DIR\orders.json -jar target\orders-0.0.1-SNAPSHOT.jar" @{
+    DD_JMXFETCH_TOMCAT_ENABLED = 'true'
+}
 
 # --- Python catalog: ddtrace-run.
 Start-Svc 'catalog' 'services\catalog-python' '.venv\Scripts\ddtrace-run .venv\Scripts\python -m uvicorn app:app --port 8001 --log-level warning'

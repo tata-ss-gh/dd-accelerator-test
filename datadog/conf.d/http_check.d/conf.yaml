@@ -1,0 +1,31 @@
+# Datadog http_check integration: the Agent calls each ShopLite /health endpoint every 15 s.
+# Produces metric network.http.response_time and service check http.can_connect (tag instance:<name>).
+init_config:
+
+instances:
+  - name: shoplite-gateway
+    url: http://localhost:3000/health
+    content_match: '"status"'
+    timeout: 5
+    tags: [env:lab, team:shoplite, service:gateway]
+  - name: shoplite-catalog
+    url: http://localhost:8001/health
+    timeout: 5
+    tags: [env:lab, team:shoplite, service:catalog]
+  - name: shoplite-orders
+    url: http://localhost:8002/health
+    timeout: 5
+    tags: [env:lab, team:shoplite, service:orders]
+  - name: shoplite-payments
+    url: http://localhost:8003/health
+    timeout: 5
+    tags: [env:lab, team:shoplite, service:payments]
+  - name: shoplite-notifications
+    url: http://localhost:8004/health
+    timeout: 5
+    tags: [env:lab, team:shoplite, service:notifications]
+  - name: shoplite-storefront
+    url: http://localhost:3000/
+    content_match: 'ShopLite'
+    timeout: 5
+    tags: [env:lab, team:shoplite, service:shop-frontend]

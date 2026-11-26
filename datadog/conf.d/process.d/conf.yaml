@@ -1,0 +1,11 @@
+# Datadog process integration: is each ShopLite process running, and how much CPU/memory does it use?
+# Produces system.processes.* metrics and service check process.up (tag process:<name>).
+# exact_match: false matches the command line, so the five services are told apart from other node/java/python processes.
+init_config:
+
+instances:
+  - { name: gateway,       search_string: ['dd-trace/init server.js'],           exact_match: false, thresholds: { critical: [1, 1] }, tags: [env:lab, team:shoplite, service:gateway] }
+  - { name: catalog,       search_string: ['uvicorn app:app'],                   exact_match: false, thresholds: { critical: [1, 2] }, tags: [env:lab, team:shoplite, service:catalog] }
+  - { name: orders,        search_string: ['orders-0.0.1-SNAPSHOT.jar'],         exact_match: false, thresholds: { critical: [1, 1] }, tags: [env:lab, team:shoplite, service:orders] }
+  - { name: payments,      search_string: ['payments.exe'],                      exact_match: true,  thresholds: { critical: [1, 1] }, tags: [env:lab, team:shoplite, service:payments] }
+  - { name: notifications, search_string: ['Notifications.dll'],                 exact_match: false, thresholds: { critical: [1, 1] }, tags: [env:lab, team:shoplite, service:notifications] }

@@ -37,6 +37,18 @@ gateway, catalog and orders write JSON lines to `LOG_DIR` (default `C:\DatadogLa
 
 The Datadog Agent tails them with [`datadog/conf.d/shoplite.d/conf.yaml`](datadog/conf.d/shoplite.d/conf.yaml).
 
+### Datadog integrations
+| Integration | Config | What it reports |
+|---|---|---|
+| HTTP Check | [`datadog/conf.d/http_check.d`](datadog/conf.d/http_check.d/conf.yaml) | `/health` of each service plus the storefront page: `http.can_connect`, `network.http.response_time` |
+| TCP Check | [`datadog/conf.d/tcp_check.d`](datadog/conf.d/tcp_check.d/conf.yaml) | ports 3000, 8001-8004: `tcp.can_connect`, `network.tcp.response_time` |
+| Process | [`datadog/conf.d/process.d`](datadog/conf.d/process.d/conf.yaml) | one instance per service process: `process.up`, `system.processes.*` |
+| Tomcat (JMX) | `DD_JMXFETCH_TOMCAT_ENABLED=true` on orders + `server.tomcat.mbeanregistry.enabled=true` | `tomcat.threads.*`, `tomcat.request_count`, `tomcat.error_count`, via JMXFetch in dd-java-agent |
+| Logs | [`datadog/conf.d/shoplite.d`](datadog/conf.d/shoplite.d/conf.yaml) | the three JSON log files |
+| OTLP ingest | Agent OTLP receiver on `:4318` | payments traces (OpenTelemetry SDK) |
+
+Synthetic tests run from a Windows **private location** on the same host, so they can reach `localhost`.
+
 ### Custom metrics (DogStatsD)
 `shoplite.checkout.count` (count, by `result`), `shoplite.gateway.checkouts_inflight` (gauge),
 `shoplite.checkout.amount` (distribution, by `product_id`), `shoplite.checkout.amount_hist` (histogram),
@@ -51,8 +63,8 @@ Python 3.11+, JDK 21, Go 1.24+, .NET 8 SDK.
 ```powershell
 copy .env.example .env        # optional: fill in DD_RUM_APP_ID / DD_RUM_CLIENT_TOKEN for browser RUM
 powershell -ExecutionPolicy Bypass -File scripts\setup.ps1            # install + build everything
-# once, as Administrator: log collection for the three JSON log files
-Copy-Item -Recurse -Force datadog\conf.d\shoplite.d C:\ProgramData\Datadog\conf.d\
+# once, as Administrator: log collection and the HTTP / TCP / process checks
+Copy-Item -Recurse -Force datadog\conf.d\* C:\ProgramData\Datadog\conf.d\
 Restart-Service datadogagent -Force   # -Force: the trace/process/OTel agents depend on it
 powershell -ExecutionPolicy Bypass -File scripts\start-services.ps1   # start (-Stop to stop)
 node tools\load.js 60 4                                               # traffic: 60 s at 4 req/s

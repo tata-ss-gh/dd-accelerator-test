@@ -1,0 +1,10 @@
+# Datadog tcp_check integration: can the Agent open a TCP connection to each ShopLite port?
+# Produces service check tcp.can_connect and metric network.tcp.response_time (tag instance:<name>).
+init_config:
+
+instances:
+  - { name: gateway-3000,        host: 127.0.0.1, port: 3000, timeout: 3, collect_response_time: true, tags: [env:lab, team:shoplite, service:gateway] }
+  - { name: catalog-8001,        host: 127.0.0.1, port: 8001, timeout: 3, collect_response_time: true, tags: [env:lab, team:shoplite, service:catalog] }
+  - { name: orders-8002,         host: 127.0.0.1, port: 8002, timeout: 3, collect_response_time: true, tags: [env:lab, team:shoplite, service:orders] }
+  - { name: payments-8003,       host: 127.0.0.1, port: 8003, timeout: 3, collect_response_time: true, tags: [env:lab, team:shoplite, service:payments] }
+  - { name: notifications-8004,  host: 127.0.0.1, port: 8004, timeout: 3, collect_response_time: true, tags: [env:lab, team:shoplite, service:notifications] }
